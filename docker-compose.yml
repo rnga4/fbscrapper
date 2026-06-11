@@ -1,0 +1,10 @@
+services:
+  fb-scraper:
+    build: .
+    container_name: fb-scraper
+    restart: unless-stopped
+    ports:
+      - "5010:5000"
+    volumes:
+      - ./output:/app/output
+      - ./session.json:/app/session.json

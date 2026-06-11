@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FB Marketplace Scraper</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f0f2f5; color: #1c1e21; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 16px; }
+  h1 { font-size: 1.6rem; font-weight: 700; color: #1877f2; margin-bottom: 4px; }
+  .subtitle { color: #888; font-size: 0.85rem; margin-bottom: 24px; }
+
+  .card { background: #fff; border: 1px solid #dde1e7; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .section-label { font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 0.78rem; color: #666; font-weight: 600; }
+
+  input[type=text], input[type=number], select {
+    background: #f7f8fa; border: 1.5px solid #dde1e7; border-radius: 8px;
+    color: #1c1e21; padding: 9px 13px; font-size: 0.9rem; outline: none;
+    transition: border 0.2s;
+  }
+  input[type=text]:focus, input[type=number]:focus, select:focus { border-color: #1877f2; background: #fff; }
+  input.keyword { min-width: 220px; }
+  input.scroll  { width: 80px; }
+  input.radius  { width: 100px; }
+  input.price   { width: 130px; }
+
+  .divider { width: 1px; background: #dde1e7; align-self: stretch; margin: 0 2px; }
+
+  button.btn-scrape {
+    background: #1877f2; color: #fff; border: none; border-radius: 8px;
+    padding: 9px 26px; font-size: 0.95rem; cursor: pointer; font-weight: 700;
+    transition: background 0.2s; align-self: flex-end;
+  }
+  button.btn-scrape:hover { background: #1558b0; }
+  button.btn-scrape:disabled { background: #b0c4e8; cursor: not-allowed; }
+
+  .log-box {
+    background: #f7f8fa; border: 1.5px solid #dde1e7; border-radius: 8px;
+    padding: 12px 14px; font-family: monospace; font-size: 0.8rem;
+    color: #1a7a40; max-height: 140px; overflow-y: auto; display: none;
+    margin-top: 16px; line-height: 1.7;
+  }
+
+  .stats { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { background: #f0f2f5; border: 1px solid #dde1e7; border-radius: 8px; padding: 9px 16px; font-size: 0.83rem; color: #555; }
+  .stat span { color: #1877f2; font-weight: 700; font-size: 1.05rem; margin-right: 5px; }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+  .left-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .search-filter {
+    background: #f7f8fa; border: 1.5px solid #dde1e7; border-radius: 8px;
+    color: #1c1e21; padding: 7px 12px; font-size: 0.85rem; outline: none; width: 200px;
+  }
+  .search-filter:focus { border-color: #1877f2; }
+
+  .price-filter { display: flex; align-items: center; gap: 6px; }
+  .price-filter input {
+    background: #f7f8fa; border: 1.5px solid #dde1e7; border-radius: 8px;
+    color: #1c1e21; padding: 7px 10px; font-size: 0.83rem; outline: none; width: 120px;
+  }
+  .price-filter input:focus { border-color: #1877f2; }
+  .price-filter span { color: #aaa; font-size: 0.85rem; }
+  .btn-filter {
+    background: #f0f2f5; color: #1877f2; border: 1.5px solid #b0c4e8;
+    border-radius: 8px; font-size: 0.83rem; padding: 7px 14px; cursor: pointer; font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn-filter:hover { background: #e7f0ff; }
+  .btn-reset {
+    background: #fff0f0; color: #d93025; border: 1.5px solid #f5b8b4;
+    border-radius: 8px; font-size: 0.83rem; padding: 7px 12px; cursor: pointer; font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn-reset:hover { background: #ffe0de; }
+
+  .dl-btn {
+    background: #e7f3e8; color: #1a7a40; border: 1.5px solid #b2dfb5;
+    border-radius: 8px; font-size: 0.85rem; padding: 7px 16px; cursor: pointer; font-weight: 600;
+  }
+  .dl-btn:hover { background: #c8e6ca; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th {
+    text-align: left; padding: 10px 12px; color: #888; font-weight: 700;
+    border-bottom: 2px solid #f0f2f5; white-space: nowrap;
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;
+    cursor: pointer; user-select: none;
+  }
+  th:hover { color: #1877f2; }
+  th .sort-icon { margin-left: 4px; opacity: 0.4; }
+  th.active .sort-icon { opacity: 1; color: #1877f2; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+  tr:hover td { background: #f7f9ff; }
+  .badge-price { color: #1a7a40; font-weight: 700; white-space: nowrap; }
+  .badge-loc { color: #888; font-size: 0.8rem; }
+  a.link-btn { color: #1877f2; text-decoration: none; font-size: 0.8rem; border: 1.5px solid #b0c4e8; border-radius: 6px; padding: 3px 10px; white-space: nowrap; font-weight: 600; }
+  a.link-btn:hover { background: #e7f0ff; }
+  .empty { text-align: center; color: #aaa; padding: 40px; }
+  .num { color: #bbb; font-size: 0.8rem; }
+  .filtered-info { font-size: 0.8rem; color: #888; padding: 4px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🛒 FB Marketplace Scraper</h1>
+  <p class="subtitle">Scrape listing Facebook Marketplace secara otomatis</p>
+
+  <div class="card">
+    <div class="section-label">Pencarian</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Keyword</label>
+        <input type="text" id="keyword" class="keyword" placeholder="contoh: wifi only, iphone 13..." value="wifi only">
+      </div>
+      <div class="form-group">
+        <label>Max Scroll</label>
+        <input type="number" id="max_scroll" class="scroll" value="15" min="1" max="30">
+      </div>
+      <div class="divider"></div>
+      <div class="form-group">
+        <label>Kota / Lokasi</label>
+        <select id="city">
+          <option value="">-- Semua Lokasi --</option>
+          <option value="jakarta">Jakarta</option>
+          <option value="surabaya">Surabaya</option>
+          <option value="bandung">Bandung</option>
+          <option value="medan">Medan</option>
+          <option value="semarang">Semarang</option>
+          <option value="makassar">Makassar</option>
+          <option value="palembang">Palembang</option>
+          <option value="tangerang">Tangerang</option>
+          <option value="depok">Depok</option>
+          <option value="bekasi">Bekasi</option>
+          <option value="bogor">Bogor</option>
+          <option value="yogyakarta">Yogyakarta</option>
+          <option value="malang">Malang</option>
+          <option value="batam">Batam</option>
+          <option value="pekanbaru">Pekanbaru</option>
+          <option value="denpasar">Denpasar</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Radius (km)</label>
+        <input type="number" id="radius" class="radius" value="400" min="10" max="500" step="10">
+      </div>
+      <button class="btn-scrape" id="btnScrape" onclick="startScrape()">🔍 Scrape</button>
+    </div>
+    <div class="log-box" id="logBox"></div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none">
+    <div class="stats">
+      <div class="stat"><span id="statTotal">0</span> total listing</div>
+      <div class="stat"><span id="statFiltered">0</span> ditampilkan</div>
+      <div class="stat"><span id="statKeyword">-</span> keyword</div>
+      <div class="stat" id="statLocBox" style="display:none"><span id="statLoc">-</span> lokasi</div>
+    </div>
+
+    <div class="toolbar">
+      <div class="left-tools">
+        <!-- Filter teks -->
+        <input type="text" class="search-filter" id="filterInput" placeholder="🔎 Filter nama barang..." oninput="applyFilters()">
+
+        <!-- Filter harga -->
+        <div class="price-filter">
+          <span>Rp</span>
+          <input type="number" id="priceMin" placeholder="Min" min="0" step="100000" oninput="applyFilters()">
+          <span>–</span>
+          <input type="number" id="priceMax" placeholder="Max" min="0" step="100000" oninput="applyFilters()">
+          <button class="btn-reset" onclick="resetFilters()" title="Reset filter">✕</button>
+        </div>
+      </div>
+      <button class="dl-btn" onclick="downloadCSV()">⬇ Download CSV</button>
+    </div>
+
+    <div class="filtered-info" id="filteredInfo"></div>
+
+    <div style="overflow-x:auto; margin-top: 8px;">
+      <table>
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th onclick="sortTable('title')">Nama Barang <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable('price_num')">Harga <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable('location')">Lokasi <span class="sort-icon">↕</span></th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentJobId = null;
+  let allData      = [];
+  let sortKey      = null;
+  let sortAsc      = true;
+
+  // Parse "Rp5.250.000" → 5250000
+  function parsePrice(str) {
+    if (!str || str === "N/A") return null;
+    if (str.toLowerCase() === "gratis") return 0;
+    return parseInt(str.replace(/[^\d]/g, "")) || null;
+  }
+
+  async function startScrape() {
+    const keyword   = document.getElementById("keyword").value.trim();
+    const maxScroll = document.getElementById("max_scroll").value;
+    const city      = document.getElementById("city").value;
+    const radius    = document.getElementById("radius").value;
+    if (!keyword) return;
+
+    const btn    = document.getElementById("btnScrape");
+    const logBox = document.getElementById("logBox");
+    btn.disabled = true;
+    btn.textContent = "⏳ Running...";
+    logBox.style.display = "block";
+    logBox.innerHTML = "";
+    document.getElementById("resultCard").style.display = "none";
+
+    const res = await fetch("/scrape", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keyword, max_scroll: maxScroll, city, radius })
+    });
+    const { job_id } = await res.json();
+    currentJobId = job_id;
+
+    const interval = setInterval(async () => {
+      const s = await fetch(`/status/${job_id}`).then(r => r.json());
+      logBox.innerHTML = s.log.map(l => `> ${l}`).join("<br>");
+      logBox.scrollTop = logBox.scrollHeight;
+
+      if (s.status === "done") {
+        clearInterval(interval);
+        btn.disabled = false;
+        btn.textContent = "🔍 Scrape";
+
+        // Tambah price_num ke setiap item
+        allData = s.data.map(item => ({ ...item, price_num: parsePrice(item.price) }));
+
+        document.getElementById("statTotal").textContent    = allData.length;
+        document.getElementById("statKeyword").textContent  = keyword;
+        if (city) {
+          document.getElementById("statLoc").textContent    = city + " +" + radius + "km";
+          document.getElementById("statLocBox").style.display = "block";
+        }
+        document.getElementById("resultCard").style.display = "block";
+        applyFilters();
+
+      } else if (s.status === "error") {
+        clearInterval(interval);
+        btn.disabled = false;
+        btn.textContent = "🔍 Scrape";
+        logBox.innerHTML += "<br><span style='color:red'>ERROR — cek log server</span>";
+      }
+    }, 1500);
+  }
+
+  function applyFilters() {
+    const q        = document.getElementById("filterInput").value.toLowerCase();
+    const minVal   = parseFloat(document.getElementById("priceMin").value) || null;
+    const maxVal   = parseFloat(document.getElementById("priceMax").value) || null;
+
+    let filtered = allData.filter(item => {
+      const matchText  = (item.title + item.location).toLowerCase().includes(q);
+      const matchMin   = minVal === null || (item.price_num !== null && item.price_num >= minVal);
+      const matchMax   = maxVal === null || (item.price_num !== null && item.price_num <= maxVal);
+      return matchText && matchMin && matchMax;
+    });
+
+    // Sort
+    if (sortKey) {
+      filtered.sort((a, b) => {
+        let va = a[sortKey], vb = b[sortKey];
+        if (typeof va === "string") va = va.toLowerCase();
+        if (typeof vb === "string") vb = vb.toLowerCase();
+        if (va === null) return 1;
+        if (vb === null) return -1;
+        return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+      });
+    }
+
+    document.getElementById("statFiltered").textContent = filtered.length;
+    const info = document.getElementById("filteredInfo");
+    info.textContent = filtered.length < allData.length
+      ? `Menampilkan ${filtered.length} dari ${allData.length} listing`
+      : "";
+
+    renderTable(filtered);
+  }
+
+  function sortTable(key) {
+    if (sortKey === key) sortAsc = !sortAsc;
+    else { sortKey = key; sortAsc = true; }
+
+    // Update icon
+    document.querySelectorAll("th").forEach(th => th.classList.remove("active"));
+    event.currentTarget.classList.add("active");
+    event.currentTarget.querySelector(".sort-icon").textContent = sortAsc ? "↑" : "↓";
+
+    applyFilters();
+  }
+
+  function resetFilters() {
+    document.getElementById("filterInput").value = "";
+    document.getElementById("priceMin").value    = "";
+    document.getElementById("priceMax").value    = "";
+    sortKey = null;
+    document.querySelectorAll("th .sort-icon").forEach(el => {
+      el.textContent = "↕";
+      el.closest("th").classList.remove("active");
+    });
+    applyFilters();
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById("tableBody");
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty">Tidak ada hasil yang cocok</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map((item, i) => `
+      <tr>
+        <td class="num">${i+1}</td>
+        <td>${item.title || "-"}</td>
+        <td class="badge-price">${item.price || "-"}</td>
+        <td class="badge-loc">${item.location || "-"}</td>
+        <td><a class="link-btn" href="${item.url}" target="_blank">Buka ↗</a></td>
+      </tr>
+    `).join("");
+  }
+
+  function downloadCSV() {
+    if (currentJobId) window.location = `/download/${currentJobId}`;
+  }
+</script>
+</body>
+</html>
