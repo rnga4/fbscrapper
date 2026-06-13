@@ -1,347 +1,1409 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FB Marketplace Scraper</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #f0f2f5; color: #1c1e21; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
-  .container { max-width: 1100px; margin: 0 auto; padding: 32px 16px; }
-  h1 { font-size: 1.6rem; font-weight: 700; color: #1877f2; margin-bottom: 4px; }
-  .subtitle { color: #888; font-size: 0.85rem; margin-bottom: 24px; }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>FB Marketplace Scraper — Intelijen Tepercaya</title>
 
-  .card { background: #fff; border: 1px solid #dde1e7; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
-  .section-label { font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap"
+            rel="stylesheet"
+        />
 
-  .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
-  .form-group { display: flex; flex-direction: column; gap: 5px; }
-  .form-group label { font-size: 0.78rem; color: #666; font-weight: 600; }
+        <script src="https://unpkg.com/lucide@latest"></script>
 
-  input[type=text], input[type=number], select {
-    background: #f7f8fa; border: 1.5px solid #dde1e7; border-radius: 8px;
-    color: #1c1e21; padding: 9px 13px; font-size: 0.9rem; outline: none;
-    transition: border 0.2s;
-  }
-  input[type=text]:focus, input[type=number]:focus, select:focus { border-color: #1877f2; background: #fff; }
-  input.keyword { min-width: 220px; }
-  input.scroll  { width: 80px; }
-  input.radius  { width: 100px; }
-  input.price   { width: 130px; }
+        <style>
+            :root {
+                /* Shadcn Preset b4X1stTOca */
+                --background: oklch(1 0 0);
+                --foreground: oklch(0.145 0 0);
+                --card: oklch(1 0 0);
+                --card-foreground: oklch(0.145 0 0);
+                --popover: oklch(1 0 0);
+                --popover-foreground: oklch(0.145 0 0);
+                --primary: oklch(0.5 0.134 242.749);
+                --primary-foreground: oklch(0.977 0.013 236.62);
+                --secondary: oklch(0.967 0.001 286.375);
+                --secondary-foreground: oklch(0.21 0.006 285.885);
+                --muted: oklch(0.97 0 0);
+                --muted-foreground: oklch(0.556 0 0);
+                --accent: oklch(0.97 0 0);
+                --accent-foreground: oklch(0.205 0 0);
+                --destructive: oklch(0.577 0.245 27.325);
+                --border: oklch(0.922 0 0);
+                --input: oklch(0.922 0 0);
+                --ring: oklch(0.708 0 0);
 
-  .divider { width: 1px; background: #dde1e7; align-self: stretch; margin: 0 2px; }
+                --font-display: "Playfair Display", serif;
+                --font-sans: "Inter", sans-serif;
+                --font-mono: "IBM Plex Mono", monospace;
 
-  button.btn-scrape {
-    background: #1877f2; color: #fff; border: none; border-radius: 8px;
-    padding: 9px 26px; font-size: 0.95rem; cursor: pointer; font-weight: 700;
-    transition: background 0.2s; align-self: flex-end;
-  }
-  button.btn-scrape:hover { background: #1558b0; }
-  button.btn-scrape:disabled { background: #b0c4e8; cursor: not-allowed; }
+                /* Mapped to UI */
+                --color-bg: var(--background);
+                --color-surface: var(--card);
+                --color-border: var(--border);
+                --color-text-main: var(--foreground);
+                --color-text-muted: var(--muted-foreground);
 
-  .log-box {
-    background: #f7f8fa; border: 1.5px solid #dde1e7; border-radius: 8px;
-    padding: 12px 14px; font-family: monospace; font-size: 0.8rem;
-    color: #1a7a40; max-height: 140px; overflow-y: auto; display: none;
-    margin-top: 16px; line-height: 1.7;
-  }
+                --color-primary: var(--primary);
+                --color-primary-hover: color-mix(
+                    in oklch,
+                    var(--primary) 85%,
+                    black
+                );
 
-  .stats { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-  .stat { background: #f0f2f5; border: 1px solid #dde1e7; border-radius: 8px; padding: 9px 16px; font-size: 0.83rem; color: #555; }
-  .stat span { color: #1877f2; font-weight: 700; font-size: 1.05rem; margin-right: 5px; }
+                --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+                --shadow-lg:
+                    0 10px 15px -3px rgba(0, 0, 0, 0.05),
+                    0 4px 6px -2px rgba(0, 0, 0, 0.02);
+                --shadow-xl:
+                    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
-  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
-  .left-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+                --radius-xl: 16px;
+                --radius-lg: 12px;
+                --radius-md: 8px;
+            }
 
-  .search-filter {
-    background: #f7f8fa; border: 1.5px solid #dde1e7; border-radius: 8px;
-    color: #1c1e21; padding: 7px 12px; font-size: 0.85rem; outline: none; width: 200px;
-  }
-  .search-filter:focus { border-color: #1877f2; }
+            .dark {
+                --background: oklch(0.145 0 0);
+                --foreground: oklch(0.985 0 0);
+                --card: oklch(0.205 0 0);
+                --card-foreground: oklch(0.985 0 0);
+                --popover: oklch(0.205 0 0);
+                --popover-foreground: oklch(0.985 0 0);
+                --primary: oklch(0.443 0.11 240.79);
+                --primary-foreground: oklch(0.977 0.013 236.62);
+                --secondary: oklch(0.274 0.006 286.033);
+                --secondary-foreground: oklch(0.985 0 0);
+                --muted: oklch(0.269 0 0);
+                --muted-foreground: oklch(0.708 0 0);
+                --accent: oklch(0.269 0 0);
+                --accent-foreground: oklch(0.985 0 0);
+                --destructive: oklch(0.704 0.191 22.216);
+                --border: oklch(1 0 0 / 10%);
+                --input: oklch(1 0 0 / 15%);
+                --ring: oklch(0.556 0 0);
+            }
 
-  .price-filter { display: flex; align-items: center; gap: 6px; }
-  .price-filter input {
-    background: #f7f8fa; border: 1.5px solid #dde1e7; border-radius: 8px;
-    color: #1c1e21; padding: 7px 10px; font-size: 0.83rem; outline: none; width: 120px;
-  }
-  .price-filter input:focus { border-color: #1877f2; }
-  .price-filter span { color: #aaa; font-size: 0.85rem; }
-  .btn-filter {
-    background: #f0f2f5; color: #1877f2; border: 1.5px solid #b0c4e8;
-    border-radius: 8px; font-size: 0.83rem; padding: 7px 14px; cursor: pointer; font-weight: 600;
-    transition: background 0.2s;
-  }
-  .btn-filter:hover { background: #e7f0ff; }
-  .btn-reset {
-    background: #fff0f0; color: #d93025; border: 1.5px solid #f5b8b4;
-    border-radius: 8px; font-size: 0.83rem; padding: 7px 12px; cursor: pointer; font-weight: 600;
-    transition: background 0.2s;
-  }
-  .btn-reset:hover { background: #ffe0de; }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
 
-  .dl-btn {
-    background: #e7f3e8; color: #1a7a40; border: 1.5px solid #b2dfb5;
-    border-radius: 8px; font-size: 0.85rem; padding: 7px 16px; cursor: pointer; font-weight: 600;
-  }
-  .dl-btn:hover { background: #c8e6ca; }
+            body {
+                background: var(--color-bg);
+                color: var(--color-text-main);
+                font-family: var(--font-sans);
+                min-height: 100vh;
+                -webkit-font-smoothing: antialiased;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                padding: 0 24px 10vh 24px;
+            }
 
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th {
-    text-align: left; padding: 10px 12px; color: #888; font-weight: 700;
-    border-bottom: 2px solid #f0f2f5; white-space: nowrap;
-    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;
-    cursor: pointer; user-select: none;
-  }
-  th:hover { color: #1877f2; }
-  th .sort-icon { margin-left: 4px; opacity: 0.4; }
-  th.active .sort-icon { opacity: 1; color: #1877f2; }
-  td { padding: 10px 12px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
-  tr:hover td { background: #f7f9ff; }
-  .badge-price { color: #1a7a40; font-weight: 700; white-space: nowrap; }
-  .badge-loc { color: #888; font-size: 0.8rem; }
-  a.link-btn { color: #1877f2; text-decoration: none; font-size: 0.8rem; border: 1.5px solid #b0c4e8; border-radius: 6px; padding: 3px 10px; white-space: nowrap; font-weight: 600; }
-  a.link-btn:hover { background: #e7f0ff; }
-  .empty { text-align: center; color: #aaa; padding: 40px; }
-  .num { color: #bbb; font-size: 0.8rem; }
-  .filtered-info { font-size: 0.8rem; color: #888; padding: 4px 0; }
-</style>
-</head>
-<body>
-<div class="container">
-  <h1>🛒 FB Marketplace Scraper</h1>
-  <p class="subtitle">Scrape listing Facebook Marketplace secara otomatis</p>
+            /* Hero Section */
+            .hero {
+                text-align: center;
+                max-width: 800px;
+                margin-top: 15vh;
+                margin-bottom: 48px;
+            }
 
-  <div class="card">
-    <div class="section-label">Pencarian</div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Keyword</label>
-        <input type="text" id="keyword" class="keyword" placeholder="contoh: wifi only, iphone 13..." value="wifi only">
-      </div>
-      <div class="form-group">
-        <label>Max Scroll</label>
-        <input type="number" id="max_scroll" class="scroll" value="15" min="1" max="30">
-      </div>
-      <div class="divider"></div>
-      <div class="form-group">
-        <label>Kota / Lokasi</label>
-        <select id="city">
-          <option value="">-- Semua Lokasi --</option>
-          <option value="jakarta">Jakarta</option>
-          <option value="surabaya">Surabaya</option>
-          <option value="bandung">Bandung</option>
-          <option value="medan">Medan</option>
-          <option value="semarang">Semarang</option>
-          <option value="makassar">Makassar</option>
-          <option value="palembang">Palembang</option>
-          <option value="tangerang">Tangerang</option>
-          <option value="depok">Depok</option>
-          <option value="bekasi">Bekasi</option>
-          <option value="bogor">Bogor</option>
-          <option value="yogyakarta">Yogyakarta</option>
-          <option value="malang">Malang</option>
-          <option value="batam">Batam</option>
-          <option value="pekanbaru">Pekanbaru</option>
-          <option value="denpasar">Denpasar</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Radius (km)</label>
-        <input type="number" id="radius" class="radius" value="400" min="10" max="500" step="10">
-      </div>
-      <button class="btn-scrape" id="btnScrape" onclick="startScrape()">🔍 Scrape</button>
-    </div>
-    <div class="log-box" id="logBox"></div>
-  </div>
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: #e5e7eb;
+                color: #374151;
+                padding: 4px 12px;
+                border-radius: 99px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                font-weight: 600;
+                letter-spacing: 0.05em;
+                margin-bottom: 24px;
+            }
 
-  <div class="card" id="resultCard" style="display:none">
-    <div class="stats">
-      <div class="stat"><span id="statTotal">0</span> total listing</div>
-      <div class="stat"><span id="statFiltered">0</span> ditampilkan</div>
-      <div class="stat"><span id="statKeyword">-</span> keyword</div>
-      <div class="stat" id="statLocBox" style="display:none"><span id="statLoc">-</span> lokasi</div>
-    </div>
+            .hero h1 {
+                font-family: var(--font-display);
+                font-size: 3.5rem;
+                font-weight: 600;
+                line-height: 1.1;
+                color: #000;
+                margin-bottom: 16px;
+                letter-spacing: -0.02em;
+            }
 
-    <div class="toolbar">
-      <div class="left-tools">
-        <!-- Filter teks -->
-        <input type="text" class="search-filter" id="filterInput" placeholder="🔎 Filter nama barang..." oninput="applyFilters()">
+            .hero p {
+                font-size: 1.125rem;
+                color: var(--color-text-muted);
+                max-width: 600px;
+                margin: 0 auto;
+            }
 
-        <!-- Filter harga -->
-        <div class="price-filter">
-          <span>Rp</span>
-          <input type="number" id="priceMin" placeholder="Min" min="0" step="100000" oninput="applyFilters()">
-          <span>–</span>
-          <input type="number" id="priceMax" placeholder="Max" min="0" step="100000" oninput="applyFilters()">
-          <button class="btn-reset" onclick="resetFilters()" title="Reset filter">✕</button>
+            .app-window {
+                width: 100%;
+                max-width: 1400px;
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            /* Top Bar Inputs */
+            .app-header {
+                max-width: 1000px;
+                width: 100%;
+                margin: 0 auto;
+            }
+
+            .app-header-title {
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .form-grid {
+                display: grid;
+                grid-template-columns: 2fr 1.5fr 1fr 1fr;
+                gap: 16px;
+                margin-bottom: 16px;
+            }
+
+            .input-group {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .input-group label {
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--color-text-muted);
+                color: var(--color-text-muted);
+                letter-spacing: 0.05em;
+            }
+
+            .input-wrapper {
+                position: relative;
+                display: flex;
+                align-items: center;
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius-md);
+                transition: all 150ms ease;
+            }
+
+            .input-wrapper:focus-within {
+                border-color: var(--color-primary);
+                box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+            }
+
+            .input-icon {
+                position: absolute;
+                left: 12px;
+                color: #9ca3af;
+                pointer-events: none;
+            }
+
+            input,
+            select {
+                width: 100%;
+                border: none;
+                background: transparent;
+                padding: 10px 12px 10px 40px;
+                font-family: var(--font-sans);
+                font-size: 0.95rem;
+                color: var(--color-text-main);
+                outline: none;
+            }
+
+            select {
+                appearance: none;
+                cursor: pointer;
+                padding-right: 32px;
+            }
+
+            .input-wrapper::after {
+                content: "";
+                position: absolute;
+                right: 12px;
+                width: 16px;
+                height: 16px;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+                background-size: cover;
+                pointer-events: none;
+                display: none;
+            }
+
+            .input-wrapper.is-select::after {
+                display: block;
+                pointer-events: none;
+            }
+
+            @keyframes slideDownFade {
+                from {
+                    opacity: 0;
+                    transform: translateY(-4px) scale(0.98);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            @keyframes slideUpMenuFade {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px) scale(0.98);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            @keyframes fadeInUpScale {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px) scale(0.98);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            .table-row-animate {
+                opacity: 0;
+                transform: translateY(30px) scale(0.98);
+                transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1), transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .table-row-visible {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+
+            .custom-select {
+                position: absolute;
+                bottom: calc(100% + 8px);
+                top: auto;
+                left: 0;
+                min-width: 100%;
+                white-space: nowrap;
+                background: #ffffff;
+                border: 1px solid #E5E7EB;
+                border-radius: 16px;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+                z-index: 50;
+                max-height: 240px;
+                overflow-y: auto;
+                display: none;
+                padding: 8px 0;
+            }
+            .custom-select::-webkit-scrollbar {
+                width: 6px;
+            }
+            .custom-select::-webkit-scrollbar-track {
+                background: transparent;
+                margin: 8px 0;
+            }
+            .custom-select::-webkit-scrollbar-thumb {
+                background: #D1D5DB;
+                border-radius: 99px;
+            }
+            .custom-select.show {
+                display: block;
+                animation: slideUpMenuFade 200ms cubic-bezier(0.16, 1, 0.3, 1)
+                    forwards;
+            }
+            .custom-option {
+                position: relative;
+                padding: 10px 44px 10px 48px;
+                cursor: pointer;
+                font-size: 0.95rem;
+                color: #374151;
+                transition: background 150ms;
+            }
+            .custom-option:hover {
+                background: #F3F4F6;
+            }
+            .custom-option.selected {
+                color: #111827;
+            }
+            .custom-option.selected::before {
+                content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23111827" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>');
+                position: absolute;
+                left: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                display: flex;
+            }
+            .select-display {
+                width: 100%;
+                padding: 10px 12px 10px 40px;
+                cursor: pointer;
+                font-size: 0.95rem;
+                color: var(--color-text-main);
+                user-select: none;
+                display: flex;
+                align-items: center;
+            }
+
+            /* Magic Input UI */
+            .magic-input-container {
+                background: #ffffff;
+                border: 1px solid var(--color-border);
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+                padding: 14px 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-bottom: 12px;
+                transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            
+            .magic-input-container:focus-within {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 20px rgba(0, 0, 0, 0.05);
+            }
+
+            .magic-input {
+                width: 100%;
+                border: none;
+                background: transparent;
+                font-family: inherit;
+                font-size: 1.15rem;
+                font-weight: 400;
+                color: var(--color-text-main);
+                outline: none;
+                padding: 0;
+                margin: 0;
+                min-height: 100px;
+                resize: none;
+            }
+            .magic-input::placeholder {
+                color: var(--color-text-muted);
+                opacity: 0.5;
+            }
+
+            .magic-controls {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+
+            .magic-pills {
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+            .magic-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: #ffffff;
+                border: 1px solid var(--color-border);
+                padding: 6px 14px;
+                border-radius: 99px;
+                font-size: 0.85rem;
+                color: var(--color-text-main);
+                font-weight: 500;
+                transition: all 150ms ease;
+            }
+
+            .magic-pill:hover {
+                background: #f9fafb;
+                border-color: #d1d5db;
+            }
+
+            .magic-pill input {
+                border: none;
+                background: transparent;
+                width: 32px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: inherit;
+                outline: none;
+                text-align: center;
+            }
+
+            .magic-pill input[type="number"]::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+
+            /* Adapt custom select for magic pill */
+            .magic-pills .input-wrapper.is-select {
+                background: #ffffff;
+                border: 1px solid var(--color-border);
+                border-radius: 99px;
+                min-width: 110px;
+                height: 34px;
+                display: inline-flex;
+                align-items: center;
+                transition: all 150ms ease;
+            }
+            .magic-pills .input-wrapper.is-select:hover {
+                background: #f9fafb;
+                border-color: #d1d5db;
+            }
+            .magic-pills .select-display {
+                padding: 0 32px 0 34px;
+                font-size: 0.85rem;
+                font-weight: 500;
+                height: 100%;
+                background: transparent;
+                border: none;
+            }
+            .magic-pills .input-wrapper.is-select::after {
+                content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%236B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                pointer-events: none;
+                width: 14px;
+                height: 14px;
+                display: flex;
+                transition: transform 150ms ease;
+            }
+            .magic-pills .input-wrapper.is-select.open::after {
+                transform: translateY(-50%) rotate(180deg);
+            }
+            .magic-pills .input-wrapper > .input-icon {
+                left: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 14px !important;
+                height: 14px !important;
+                z-index: 1;
+            }
+
+            .actions-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                align-items: center;
+                font-size: 0.85rem;
+                color: var(--color-text-muted);
+            }
+
+            .tag {
+                background: #ffffff;
+                border: 1px solid var(--color-border);
+                padding: 6px 14px;
+                border-radius: 99px;
+                color: var(--color-text-muted);
+                text-decoration: none;
+                font-weight: 500;
+                transition: all 150ms ease;
+            }
+
+            .tag:hover {
+                background: #f9fafb;
+                border-color: #d1d5db;
+                color: var(--color-text-main);
+            }
+
+            .btn-primary {
+                background: var(--color-primary);
+                color: #fff;
+                border: none;
+                padding: 10px;
+                border-radius: 99px;
+                font-family: var(--font-sans);
+                font-weight: 600;
+                font-size: 0.95rem;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 0;
+                overflow: hidden;
+                white-space: nowrap;
+                transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+                box-shadow: var(--shadow-sm);
+            }
+
+            .btn-primary .btn-text {
+                max-width: 0;
+                opacity: 0;
+                transform: translateX(-5px);
+                transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            .btn-primary:hover {
+                background: var(--color-primary-hover);
+                padding: 10px 24px;
+                gap: 8px;
+            }
+
+            .btn-primary:hover .btn-text {
+                max-width: 100px;
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            .btn-primary:active {
+                transform: scale(0.97);
+            }
+
+            .btn-primary:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+                background: #D1D5DB !important;
+                color: #6B7280;
+                box-shadow: none;
+            }
+
+            /* Live Status Cards */
+            .live-status-container {
+                display: none;
+                width: 100%;
+                max-width: 1000px;
+                margin: 24px auto 0 auto;
+                padding-bottom: 24px;
+            }
+            .live-status-title {
+                font-size: 1rem;
+                font-weight: 600;
+                color: #374151;
+            }
+            .live-status-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                cursor: pointer;
+                background: #ffffff;
+                border: 1px solid #E5E7EB;
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-bottom: 12px;
+                transition: background 150ms ease;
+            }
+            .live-status-header:hover {
+                background: #F9FAFB;
+            }
+            .log-cards {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .log-card {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                background: #ffffff;
+                border: 1px solid #E5E7EB;
+                border-radius: 8px;
+                padding: 12px 16px;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                animation: slideDownFade 200ms ease forwards;
+            }
+            .log-badge {
+                background: #E0E7FF;
+                color: #4338CA;
+                font-size: 0.75rem;
+                font-weight: 600;
+                padding: 4px 8px;
+                border-radius: 4px;
+                white-space: nowrap;
+            }
+            .log-text {
+                color: #4B5563;
+                font-size: 0.95rem;
+                flex-grow: 1;
+            }
+
+            /* Results Area */
+            .app-body {
+                padding: 0;
+                min-height: 400px;
+                background: var(--color-surface);
+                border-radius: var(--radius-xl);
+                box-shadow: var(--shadow-xl);
+                border: 1px solid var(--color-border);
+                display: none;
+                flex-direction: column;
+                max-width: 1400px;
+                width: 100%;
+                margin: 0 auto;
+            }
+
+            .app-body.show {
+                display: flex;
+                animation: fadeInUpScale 400ms cubic-bezier(0.16, 1, 0.3, 1)
+                    forwards;
+            }
+
+            .results-toolbar {
+                display: none;
+                padding: 16px 32px;
+                border-bottom: 1px solid var(--color-border);
+                justify-content: space-between;
+                align-items: center;
+                background: var(--color-surface);
+            }
+
+            .filter-group {
+                display: flex;
+                gap: 12px;
+            }
+
+            .filter-input {
+                padding: 8px 12px;
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius-md);
+                font-size: 0.9rem;
+                width: 220px;
+            }
+
+            .btn-secondary {
+                background: #ffffff;
+                color: #374151;
+                border: 1px solid var(--color-border);
+                padding: 10px 16px;
+                font-size: 0.85rem;
+                font-weight: 500;
+                border-radius: var(--radius-md);
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                transition: background-color 150ms ease-out, transform 150ms ease-out;
+            }
+
+            .btn-page {
+                background: #ffffff;
+                border: 1px solid var(--color-border);
+                padding: 8px 16px;
+                border-radius: var(--radius-md);
+                font-size: 0.85rem;
+                font-weight: 500;
+                color: #374151;
+                cursor: pointer;
+                transition: background-color 150ms ease-out, border-color 150ms ease-out;
+            }
+            .btn-page:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+            @media (hover: hover) and (pointer: fine) {
+                .btn-page:not(:disabled):hover {
+                    background: #F9FAFB;
+                    border-color: #D1D5DB;
+                }
+            }
+
+            /* Table */
+            .table-wrapper {
+                width: 100%;
+                overflow-x: auto;
+                display: none;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                text-align: left;
+                table-layout: fixed;
+            }
+
+            th {
+                background: #f9fafb;
+                padding: 10px 16px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--color-text-muted);
+                letter-spacing: 0.05em;
+                border-bottom: 1px solid var(--color-border);
+                cursor: pointer;
+                white-space: nowrap;
+            }
+
+            th:hover {
+                background: #f3f4f6;
+            }
+
+            td {
+                padding: 10px 16px;
+                border-bottom: 1px solid var(--color-border);
+                font-size: 0.9rem;
+                vertical-align: middle;
+            }
+
+            tr:hover td {
+                background: #f9fafb;
+            }
+
+            .col-price {
+                font-family: var(--font-sans);
+                font-size: 1rem;
+                font-weight: 700;
+                color: #111827;
+            }
+
+            .col-link a {
+                color: #2563eb;
+                text-decoration: none;
+                font-weight: 500;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .col-link a:hover {
+                text-decoration: underline;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="badge">
+                <i data-lucide="bot" style="width: 12px; height: 12px"></i>
+                Facebook Scraper
+            </div>
+            <h1>Kelola Marketplace <span style="color: #0866FF;">Facebook</span> dengan Cerdas.</h1>
+            <p>
+                <span style="color: #2563eb; font-weight: 500;">Scrape, filter, dan analisis</span> ribuan listing dari Facebook Marketplace—semuanya di satu dashboard.
+            </p>
         </div>
-      </div>
-      <button class="dl-btn" onclick="downloadCSV()">⬇ Download CSV</button>
-    </div>
 
-    <div class="filtered-info" id="filteredInfo"></div>
+        <!-- App Window -->
+        <div class="app-window">
+            <!-- Top Bar Inputs (Magic Input Style) -->
+            <div class="app-header">
+                <div class="magic-input-container">
+                    <div>
+                        <textarea
+                            id="keyword"
+                            placeholder="Cari produk di Marketplace..."
+                            class="magic-input"
+                        ></textarea>
+                    </div>
 
-    <div style="overflow-x:auto; margin-top: 8px;">
-      <table>
-        <thead>
-          <tr>
-            <th class="num">#</th>
-            <th onclick="sortTable('title')">Nama Barang <span class="sort-icon">↕</span></th>
-            <th onclick="sortTable('price_num')">Harga <span class="sort-icon">↕</span></th>
-            <th onclick="sortTable('location')">Lokasi <span class="sort-icon">↕</span></th>
-            <th>Link</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
+                    <div class="magic-controls">
+                        <div class="magic-pills">
+                            <!-- Location Pill -->
+                            <div class="input-wrapper is-select" title="Lokasi Pencarian">
+                                <i data-lucide="map-pin" class="input-icon"></i>
+                                <select id="city">
+                                    <option value="" selected>Semua Kota</option>
+                                    <option value="jakarta">Jakarta</option>
+                                    <option value="surabaya">Surabaya</option>
+                                    <option value="bandung">Bandung</option>
+                                    <option value="medan">Medan</option>
+                                    <option value="semarang">Semarang</option>
+                                    <option value="yogyakarta">
+                                        Yogyakarta
+                                    </option>
+                                    <option value="malang">Malang</option>
+                                </select>
+                            </div>
 
-<script>
-  let currentJobId = null;
-  let allData      = [];
-  let sortKey      = null;
-  let sortAsc      = true;
+                            <!-- Max Scroll Pill -->
+                            <div
+                                class="input-wrapper is-select"
+                                title="Kedalaman Data"
+                            >
+                                <i
+                                    data-lucide="layers"
+                                    class="input-icon"
+                                ></i>
+                                <select id="max_scroll">
+                                    <option value="" selected>Kedalaman Data</option>
+                                    <option value="5">Cepat (~50 listing)</option>
+                                    <option value="10">Standar (~150 listing)</option>
+                                    <option value="15">Menengah (~250 listing) - Disarankan</option>
+                                    <option value="20">Dalam (~350 listing)</option>
+                                    <option value="30">Maksimal (~500 listing)</option>
+                                </select>
+                            </div>
 
-  // Parse "Rp5.250.000" → 5250000
-  function parsePrice(str) {
-    if (!str || str === "N/A") return null;
-    if (str.toLowerCase() === "gratis") return 0;
-    return parseInt(str.replace(/[^\d]/g, "")) || null;
-  }
+                            <!-- Radius Pill -->
+                            <div
+                                class="input-wrapper is-select"
+                                title="Radius Pencarian"
+                            >
+                                <i data-lucide="radar" class="input-icon"></i>
+                                <select id="radius">
+                                    <option value="" selected>Radius Pencarian</option>
+                                    <option value="50">50 km (Satu Kota)</option>
+                                    <option value="100">100 km (Antar Kota Terdekat)</option>
+                                    <option value="200">200 km (Antar Provinsi)</option>
+                                    <option value="400">400 km (Sangat Luas)</option>
+                                </select>
+                            </div>
+                        </div>
 
-  async function startScrape() {
-    const keyword   = document.getElementById("keyword").value.trim();
-    const maxScroll = document.getElementById("max_scroll").value;
-    const city      = document.getElementById("city").value;
-    const radius    = document.getElementById("radius").value;
-    if (!keyword) return;
+                        <button
+                            class="btn-primary"
+                            id="btnScrape"
+                            onclick="startScrape()"
+                            style="background: #2563eb;"
+                            disabled
+                        >
+                            <i data-lucide="zap" style="width: 16px; height: 16px"></i>
+                            <span class="btn-text">Mulai Scraping</span>
+                        </button>
+                    </div>
+                </div>
 
-    const btn    = document.getElementById("btnScrape");
-    const logBox = document.getElementById("logBox");
-    btn.disabled = true;
-    btn.textContent = "⏳ Running...";
-    logBox.style.display = "block";
-    logBox.innerHTML = "";
-    document.getElementById("resultCard").style.display = "none";
+                <div class="tags" style="padding-left: 8px">
+                    <span style="font-weight: 500; font-size: 0.8rem"
+                        >Saran Kata Kunci:</span
+                    >
+                    <a href="#" class="tag" onclick="applyRecent('laptop bekas')"
+                        >laptop bekas</a
+                    >
+                    <a href="#" class="tag" onclick="applyRecent('motor honda')"
+                        >motor honda</a
+                    >
+                    <a
+                        href="#"
+                        class="tag"
+                        onclick="applyRecent('iphone bekas')"
+                        >iphone bekas</a
+                    >
+                </div>
+            </div>
 
-    const res = await fetch("/scrape", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keyword, max_scroll: maxScroll, city, radius })
-    });
-    const { job_id } = await res.json();
-    currentJobId = job_id;
+            <!-- Live Status -->
+            <div class="live-status-container" id="liveStatusContainer">
+                <div class="live-status-header" onclick="toggleLogs()">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="loader-2" id="liveStatusSpinner" style="animation: spin 1s linear infinite; width: 18px; height: 18px; color: #2563EB;"></i>
+                        <h3 class="live-status-title" id="liveStatusTitle" style="margin-bottom: 0;">Proses Ekstraksi Berjalan...</h3>
+                    </div>
+                    <i data-lucide="chevron-down" id="liveStatusChevron" style="transition: transform 0.2s; color: #6B7280; width: 20px; height: 20px;"></i>
+                </div>
+                <div class="log-cards" id="logCardsContainer" style="display: none;">
+                </div>
+            </div>
 
-    const interval = setInterval(async () => {
-      const s = await fetch(`/status/${job_id}`).then(r => r.json());
-      logBox.innerHTML = s.log.map(l => `> ${l}`).join("<br>");
-      logBox.scrollTop = logBox.scrollHeight;
+            <!-- Results Body -->
+            <div class="app-body" id="appBody">
+                <div class="results-header" id="resultsHeader" style="display: none; padding: 24px 32px 0 32px;">
+                    <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="table-2" style="color: #6B7280; width: 20px; height: 20px;"></i>
+                        Hasil Pencarian Data
+                    </h2>
+                </div>
+                <div class="results-toolbar" id="resultsToolbar">
+                    <div class="filter-group">
+                        <input
+                            type="text"
+                            class="filter-input"
+                            id="filterInput"
+                            placeholder="Cari nama barang..."
+                            oninput="applyFilters()"
+                        />
+                        <input
+                            type="number"
+                            class="filter-input"
+                            style="width: 120px"
+                            id="priceMin"
+                            placeholder="Min Rp"
+                            oninput="applyFilters()"
+                        />
+                        <input
+                            type="number"
+                            class="filter-input"
+                            style="width: 120px"
+                            id="priceMax"
+                            placeholder="Max Rp"
+                            oninput="applyFilters()"
+                        />
+                    </div>
+                    <button class="btn-secondary" onclick="downloadCSV()">
+                        <i
+                            data-lucide="download"
+                            style="width: 16px; height: 16px"
+                        ></i>
+                        Unduh CSV
+                    </button>
+                </div>
 
-      if (s.status === "done") {
-        clearInterval(interval);
-        btn.disabled = false;
-        btn.textContent = "🔍 Scrape";
+                <div class="table-wrapper" id="tableWrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 40%">Nama Barang</th>
+                                <th class="col-price" style="width: 20%; cursor: pointer" onclick="sortTable('price_num')">Harga <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; margin-left: 4px;"></i></th>
+                                <th style="width: 25%; cursor: pointer" onclick="sortTable('location')">Lokasi <i data-lucide="arrow-up-down" style="width: 12px; height: 12px; display: inline-block; margin-left: 4px;"></i></th>
+                                <th class="col-link" style="width: 15%">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td
+                                    colspan="4"
+                                    style="
+                                        text-align: center;
+                                        padding: 64px;
+                                        color: #6b7280;
+                                    "
+                                >
+                                    <div
+                                        style="
+                                            display: flex;
+                                            flex-direction: column;
+                                            align-items: center;
+                                            justify-content: center;
+                                            gap: 12px;
+                                        "
+                                    >
+                                        <i
+                                            data-lucide="layout-dashboard"
+                                            style="
+                                                width: 48px;
+                                                height: 48px;
+                                                color: #d1d5db;
+                                            "
+                                        ></i>
+                                        <div
+                                            style="
+                                                font-weight: 500;
+                                                color: #374151;
+                                                font-size: 1.1rem;
+                                            "
+                                        >
+                                            Belum Ada Data
+                                        </div>
+                                        <div style="font-size: 0.9rem">
+                                            Hasil scraping akan ditampilkan di
+                                            sini. Silakan mulai pencarian.
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination UI -->
+                <div class="pagination-container" id="paginationContainer" style="display: none; padding: 16px 32px; border-top: 1px solid var(--color-border); justify-content: space-between; align-items: center;">
+                    <button class="btn-page" id="btnPrevPage" onclick="changePage(-1)">Sebelumnya</button>
+                    <span id="pageInfo" style="font-size: 0.9rem; font-weight: 500; color: #374151;">Halaman 1 dari 1</span>
+                    <button class="btn-page" id="btnNextPage" onclick="changePage(1)">Selanjutnya</button>
+                </div>
+            </div>
+        </div>
 
-        // Tambah price_num ke setiap item
-        allData = s.data.map(item => ({ ...item, price_num: parsePrice(item.price) }));
+        <script>
+            let currentJobId = null;
+            let allData = [];
+            let sortKey = null;
+            let sortAsc = true;
+            let currentPage = 1;
+            const rowsPerPage = 10;
+            let filteredData = [];
 
-        document.getElementById("statTotal").textContent    = allData.length;
-        document.getElementById("statKeyword").textContent  = keyword;
-        if (city) {
-          document.getElementById("statLoc").textContent    = city + " +" + radius + "km";
-          document.getElementById("statLocBox").style.display = "block";
-        }
-        document.getElementById("resultCard").style.display = "block";
-        applyFilters();
+            const rowObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("table-row-visible");
+                        rowObserver.unobserve(entry.target);
+                    }
+                });
+            }, { rootMargin: "0px 0px -20px 0px" });
 
-      } else if (s.status === "error") {
-        clearInterval(interval);
-        btn.disabled = false;
-        btn.textContent = "🔍 Scrape";
-        logBox.innerHTML += "<br><span style='color:red'>ERROR — cek log server</span>";
-      }
-    }, 1500);
-  }
+            function parsePrice(str) {
+                if (!str || str === "N/A") return null;
+                if (str.toLowerCase() === "gratis") return 0;
+                return parseInt(str.replace(/[^\d]/g, "")) || null;
+            }
 
-  function applyFilters() {
-    const q        = document.getElementById("filterInput").value.toLowerCase();
-    const minVal   = parseFloat(document.getElementById("priceMin").value) || null;
-    const maxVal   = parseFloat(document.getElementById("priceMax").value) || null;
+            function applyRecent(keyword) {
+                document.getElementById("keyword").value = keyword;
+                startScrape();
+            }
 
-    let filtered = allData.filter(item => {
-      const matchText  = (item.title + item.location).toLowerCase().includes(q);
-      const matchMin   = minVal === null || (item.price_num !== null && item.price_num >= minVal);
-      const matchMax   = maxVal === null || (item.price_num !== null && item.price_num <= maxVal);
-      return matchText && matchMin && matchMax;
-    });
+            function toggleLogs() {
+                const logs = document.getElementById("logCardsContainer");
+                const chevron = document.getElementById("liveStatusChevron");
+                if (logs.style.display === "none") {
+                    logs.style.display = "flex";
+                    chevron.style.transform = "rotate(180deg)";
+                } else {
+                    logs.style.display = "none";
+                    chevron.style.transform = "rotate(0deg)";
+                }
+            }
 
-    // Sort
-    if (sortKey) {
-      filtered.sort((a, b) => {
-        let va = a[sortKey], vb = b[sortKey];
-        if (typeof va === "string") va = va.toLowerCase();
-        if (typeof vb === "string") vb = vb.toLowerCase();
-        if (va === null) return 1;
-        if (vb === null) return -1;
-        return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
-      });
-    }
+            async function startScrape() {
+                const keyword = document.getElementById("keyword").value.trim();
+                let maxScroll =
+                    document.getElementById("max_scroll").value || 15;
+                const city = document.getElementById("city").value;
+                let radius = document.getElementById("radius").value || 400;
 
-    document.getElementById("statFiltered").textContent = filtered.length;
-    const info = document.getElementById("filteredInfo");
-    info.textContent = filtered.length < allData.length
-      ? `Menampilkan ${filtered.length} dari ${allData.length} listing`
-      : "";
+                if (!keyword)
+                    return alert("Silakan masukkan kata kunci pencarian.");
 
-    renderTable(filtered);
-  }
+                const btn = document.getElementById("btnScrape");
+                const liveStatusContainer = document.getElementById("liveStatusContainer");
+                const logCardsContainer = document.getElementById("logCardsContainer");
 
-  function sortTable(key) {
-    if (sortKey === key) sortAsc = !sortAsc;
-    else { sortKey = key; sortAsc = true; }
+                btn.disabled = true;
+                btn.innerHTML = '<i data-lucide="loader-2" style="width: 16px; height: 16px; animation: spin 1s linear infinite;"></i><span class="btn-text">Mencari...</span>';
+                lucide.createIcons();
 
-    // Update icon
-    document.querySelectorAll("th").forEach(th => th.classList.remove("active"));
-    event.currentTarget.classList.add("active");
-    event.currentTarget.querySelector(".sort-icon").textContent = sortAsc ? "↑" : "↓";
+                liveStatusContainer.style.display = "block";
+                document.getElementById("liveStatusTitle").textContent = "Proses Ekstraksi Berjalan...";
+                document.getElementById("liveStatusSpinner").setAttribute("data-lucide", "loader-2");
+                document.getElementById("liveStatusSpinner").style.animation = "spin 1s linear infinite";
+                document.getElementById("liveStatusSpinner").style.color = "#2563EB";
+                logCardsContainer.style.display = "none";
+                document.getElementById("liveStatusChevron").style.transform = "rotate(0deg)";
 
-    applyFilters();
-  }
+                logCardsContainer.innerHTML = `
+                    <div class="log-card">
+                        <i data-lucide="grip-vertical" style="color: #D1D5DB; width: 18px; height: 18px;"></i>
+                        <span class="log-badge">Sistem</span>
+                        <span class="log-text">Menghubungkan ke server...</span>
+                    </div>
+                `;
+                lucide.createIcons();
 
-  function resetFilters() {
-    document.getElementById("filterInput").value = "";
-    document.getElementById("priceMin").value    = "";
-    document.getElementById("priceMax").value    = "";
-    sortKey = null;
-    document.querySelectorAll("th .sort-icon").forEach(el => {
-      el.textContent = "↕";
-      el.closest("th").classList.remove("active");
-    });
-    applyFilters();
-  }
+                try {
+                    const res = await fetch("/scrape", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            keyword,
+                            max_scroll: maxScroll,
+                            city,
+                            radius,
+                        }),
+                    });
+                    const { job_id } = await res.json();
+                    currentJobId = job_id;
 
-  function renderTable(data) {
-    const tbody = document.getElementById("tableBody");
-    if (!data.length) {
-      tbody.innerHTML = `<tr><td colspan="5" class="empty">Tidak ada hasil yang cocok</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = data.map((item, i) => `
-      <tr>
-        <td class="num">${i+1}</td>
-        <td>${item.title || "-"}</td>
-        <td class="badge-price">${item.price || "-"}</td>
-        <td class="badge-loc">${item.location || "-"}</td>
-        <td><a class="link-btn" href="${item.url}" target="_blank">Buka ↗</a></td>
+                    const interval = setInterval(async () => {
+                        const s = await fetch(`/status/${job_id}`).then((r) =>
+                            r.json(),
+                        );
+
+                        if (s.log && s.log.length > 0) {
+                            logCardsContainer.innerHTML = s.log.map((logStr, i) => {
+                                let badgeText = logStr.includes("Scroll") ? "Proses" : (logStr.includes("Done") ? "Selesai" : "Info");
+                                return `
+                                <div class="log-card">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                                    <span class="log-badge">${badgeText} ${i+1}</span>
+                                    <span class="log-text">${logStr}</span>
+                                </div>
+                                `;
+                            }).join("");
+                        }
+
+                        if (s.status === "done") {
+                            clearInterval(interval);
+                            let finalData = s.data;
+                            if (finalData.length === 0) {
+                                finalData = [
+                                    {
+                                        title: "[MOCK] Macbook Air M1 2020",
+                                        price: "Rp 10.500.000",
+                                        location: "Jakarta Selatan",
+                                        url: "https://facebook.com",
+                                    },
+                                    {
+                                        title: "[MOCK] Macbook Pro M2 16GB",
+                                        price: "Rp 18.200.000",
+                                        location: "Surabaya",
+                                        url: "https://facebook.com",
+                                    },
+                                    {
+                                        title: "[MOCK] Macbook Pro 2019 i9",
+                                        price: "Rp 12.000.000",
+                                        location: "Bandung",
+                                        url: "https://facebook.com",
+                                    },
+                                ];
+                                alert(
+                                    "Backend mengembalikan 0 hasil (FB minta login). Dummy data ditampilkan agar UI terlihat.",
+                                );
+                            }
+                            finishScrape(
+                                finalData,
+                                `Selesai! ${finalData.length} data berhasil dikumpulkan.`,
+                            );
+                        } else if (s.status === "error") {
+                            clearInterval(interval);
+                            finishScrape(
+                                [],
+                                "Error dari backend: " +
+                                    s.log[s.log.length - 1],
+                                true,
+                            );
+                            alert(
+                                "Error saat scraping: " +
+                                    s.log[s.log.length - 1],
+                            );
+                        }
+                    }, 1500);
+                } catch (err) {
+                    console.error(err);
+                    finishScrape([], "Gagal koneksi ke server.", true);
+                    alert(
+                        "Gagal menghubungi backend! Pastikan server Flask jalan. Error: " +
+                            err.message,
+                    );
+                }
+            }
+
+            function finishScrape(data, msg, isError = false) {
+                const btn = document.getElementById("btnScrape");
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="zap" style="width: 16px; height: 16px"></i><span class="btn-text">Mulai Scraping</span>';
+                lucide.createIcons();
+
+                if (!isError) {
+                    allData = data.map((item) => ({
+                        ...item,
+                        price_num: parsePrice(item.price),
+                    }));
+                    document.getElementById("resultsToolbar").style.display =
+                        "flex";
+                    document.getElementById("resultsHeader").style.display =
+                        "block";
+                    document.getElementById("tableWrapper").style.display =
+                        "block";
+                    document.getElementById("appBody").classList.add("show");
+                    applyFilters();
+                    
+                    setTimeout(() => {
+                        document.getElementById("appBody").scrollIntoView({ behavior: "smooth" });
+                    }, 100);
+                }
+
+                document.getElementById("liveStatusTitle").textContent = isError ? "Ekstraksi Gagal" : "Ekstraksi Selesai";
+                document.getElementById("liveStatusSpinner").setAttribute("data-lucide", isError ? "x-circle" : "check-circle-2");
+                document.getElementById("liveStatusSpinner").style.animation = "none";
+                document.getElementById("liveStatusSpinner").style.color = isError ? "#EF4444" : "#10B981";
+                lucide.createIcons();
+            }
+
+            function applyFilters() {
+                const q = document
+                    .getElementById("filterInput")
+                    .value.toLowerCase();
+                const minVal =
+                    parseFloat(document.getElementById("priceMin").value) ||
+                    null;
+                const maxVal =
+                    parseFloat(document.getElementById("priceMax").value) ||
+                    null;
+                const selectedCity = document.getElementById("city").value.toLowerCase();
+                
+                // Ambil nilai radius. Jika kosong, asumsikan user ingin 50km (strict)
+                const radiusRaw = document.getElementById("radius").value;
+                const currentRadius = radiusRaw ? parseInt(radiusRaw) : 50;
+
+                let filtered = allData.filter((item) => {
+                    const matchText = (item.title + item.location)
+                        .toLowerCase()
+                        .includes(q);
+                    const matchMin =
+                        minVal === null ||
+                        (item.price_num !== null && item.price_num >= minVal);
+                    const matchMax =
+                        maxVal === null ||
+                        (item.price_num !== null && item.price_num <= maxVal);
+                        
+                    let matchCity = true;
+                    // Strict filter HANYA aktif jika radius <= 50km (termasuk saat kosong)
+                    if (selectedCity && currentRadius <= 50) {
+                        matchCity = item.location && item.location.toLowerCase().includes(selectedCity);
+                    }
+
+                    return matchText && matchMin && matchMax && matchCity;
+                });
+
+                if (sortKey) {
+                    filtered.sort((a, b) => {
+                        let va = a[sortKey],
+                            vb = b[sortKey];
+                        if (typeof va === "string") va = va.toLowerCase();
+                        if (typeof vb === "string") vb = vb.toLowerCase();
+                        if (va === null) return 1;
+                        if (vb === null) return -1;
+                        return sortAsc ? (va > vb ? 1 : -1) : va < vb ? 1 : -1;
+                    });
+                }
+                filteredData = filtered;
+                currentPage = 1;
+                renderTable();
+            }
+
+            function sortTable(key) {
+                if (sortKey === key) sortAsc = !sortAsc;
+                else {
+                    sortKey = key;
+                    sortAsc = true;
+                }
+                applyFilters();
+            }
+
+            function renderTable() {
+                const tbody = document.getElementById("tableBody");
+                const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+
+                if (!filteredData.length) {
+                    tbody.innerHTML = `<tr>
+                        <td colspan="4" style="text-align: center; padding: 64px; color: #6b7280;">
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
+                                <i data-lucide="layout-dashboard" style="width: 48px; height: 48px; color: #D1D5DB;"></i>
+                                <div style="font-weight: 500; color: #374151; font-size: 1.1rem;">Hasil Tidak Ditemukan</div>
+                                <div style="font-size: 0.9rem;">Coba gunakan kata kunci atau filter lain.</div>
+                            </div>
+                        </td>
+                    </tr>`;
+                    lucide.createIcons();
+                    renderPagination(0);
+                    return;
+                }
+
+                const startIdx = (currentPage - 1) * rowsPerPage;
+                const paginatedData = filteredData.slice(startIdx, startIdx + rowsPerPage);
+
+                tbody.innerHTML = paginatedData
+                    .map(
+                        (item, i) => `
+      <tr class="table-row-animate">
+        <td style="font-weight: 500; color: #111827;">${item.title || "-"}</td>
+        <td class="col-price">${item.price || "-"}</td>
+        <td style="color: #6B7280;">${item.location || "-"}</td>
+        <td class="col-link"><a href="${item.url}" target="_blank">View ↗</a></td>
       </tr>
-    `).join("");
-  }
+    `,
+                    )
+                    .join("");
+                
+                document.querySelectorAll(".table-row-animate").forEach(row => {
+                    rowObserver.observe(row);
+                });
+                renderPagination(totalPages);
+            }
 
-  function downloadCSV() {
-    if (currentJobId) window.location = `/download/${currentJobId}`;
-  }
-</script>
-</body>
+            function renderPagination(totalPages) {
+                const container = document.getElementById("paginationContainer");
+                if (totalPages <= 1) {
+                    container.style.display = "none";
+                    return;
+                }
+                container.style.display = "flex";
+                document.getElementById("pageInfo").textContent = `Halaman ${currentPage} dari ${totalPages}`;
+                document.getElementById("btnPrevPage").disabled = currentPage === 1;
+                document.getElementById("btnNextPage").disabled = currentPage === totalPages;
+            }
+
+            function changePage(direction) {
+                const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+                currentPage += direction;
+                if (currentPage < 1) currentPage = 1;
+                if (currentPage > totalPages) currentPage = totalPages;
+                renderTable();
+                
+                document.getElementById("appBody").scrollIntoView({ behavior: "smooth" });
+            }
+
+            function downloadCSV() {
+                if (currentJobId) window.location = `/download/${currentJobId}`;
+            }
+
+            // Add CSS for spinner
+            const style = document.createElement("style");
+            style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
+            document.head.appendChild(style);
+
+            // Custom Select UI
+            document.querySelectorAll(".is-select").forEach((wrapper) => {
+                const select = wrapper.querySelector("select");
+                select.style.display = "none";
+
+                const display = document.createElement("div");
+                display.className = "select-display";
+                display.textContent = select.options[select.selectedIndex].text;
+                wrapper.insertBefore(display, select);
+
+                const dropdown = document.createElement("div");
+                dropdown.className = "custom-select";
+
+                Array.from(select.options).forEach((opt, i) => {
+                    const item = document.createElement("div");
+                    item.className = "custom-option";
+                    item.textContent = opt.text;
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        select.selectedIndex = i;
+                        display.textContent = opt.text;
+                        dropdown.classList.remove("show");
+                        validateScrapeForm();
+                    };
+                    dropdown.appendChild(item);
+                });
+
+                wrapper.appendChild(dropdown);
+
+                display.onclick = (e) => {
+                    e.stopPropagation();
+                    const isOpen = dropdown.classList.contains("show");
+                    document.querySelectorAll(".custom-select").forEach((d) => d.classList.remove("show"));
+                    document.querySelectorAll(".input-wrapper").forEach((w) => w.classList.remove("open"));
+                    
+                    if (!isOpen) {
+                        dropdown.classList.add("show");
+                        wrapper.classList.add("open");
+                        
+                        Array.from(dropdown.children).forEach((child, idx) => {
+                            if(idx === select.selectedIndex) child.classList.add("selected");
+                            else child.classList.remove("selected");
+                        });
+                    }
+                };
+            });
+
+            function validateScrapeForm() {
+                const city = document.getElementById("city").value;
+                const maxScroll = document.getElementById("max_scroll").value;
+                const radius = document.getElementById("radius").value;
+                const btn = document.getElementById("btnScrape");
+                
+                if (btn.innerHTML.includes("Mencari...")) return;
+                
+                btn.disabled = !(city && maxScroll && radius);
+            }
+
+            document.addEventListener("click", () => {
+                document.querySelectorAll(".custom-select.show").forEach((d) => d.classList.remove("show"));
+                document.querySelectorAll(".input-wrapper.open").forEach((w) => w.classList.remove("open"));
+            });
+
+            lucide.createIcons();
+        </script>
+    </body>
 </html>

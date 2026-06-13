@@ -1,7 +1,15 @@
 # fbscrapper
 fb marketplace scarpper, proyek iseng aja, barangkali ada yang mau nambahin fitur silahkan.
 
+## Fitur UI/UX Baru (Frontend Overhaul)
+- Tampilan modern terinspirasi desain Facebook.
+- *Strict filter* lokasi (Otomatis aktif jika radius tidak dipilih).
+- Validasi *dropdown* dinamis sebelum *scraping*.
+- Kolom tabel tetap statis dan rapi walau teks panjang.
+- Efek transisi halus dan desain *motion* ala "Mas Moses".
+
 ## Setup Session (Login Facebook)
+
 
 Sebelum menjalankan scraper, kamu perlu login Facebook terlebih dahulu untuk generate `session.json`.
 

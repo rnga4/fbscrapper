@@ -34,8 +34,13 @@ def do_scrape(job_id, keyword, max_scroll, city, radius):
 
     try:
         with sync_playwright() as p:
+            # Gunakan path relatif dari file main.py ini
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_dir = os.path.dirname(current_dir)
+            session_path = os.path.join(project_dir, "session.json")
+            
             browser = p.chromium.launch(headless=True)
-            context = browser.new_context(storage_state="/app/session.json")
+            context = browser.new_context(storage_state=session_path)
             page = context.new_page()
 
             # Build URL dengan lokasi & radius kalau ada
@@ -77,11 +82,14 @@ def do_scrape(job_id, keyword, max_scroll, city, radius):
                         const spans = [...card.querySelectorAll("span")]
                             .map(s => s.innerText.trim())
                             .filter(t => t.length > 0);
-                        const price = spans.find(t => t.startsWith("Rp") || t.toLowerCase() === "gratis") || "N/A";
-                        const title = spans.reduce((a, b) =>
-                            (b.length > a.length && !b.startsWith("Rp") && b.toLowerCase() !== "gratis") ? b : a
-                        , "");
-                        const location = spans.filter(t => !t.startsWith("Rp") && t.toLowerCase() !== "gratis").pop() || "N/A";
+                        const FB_BADGES = new Set(["terlaris","baru","featured","cepat terjual","dijual cepat","sold","terjual","unggulan"]);
+                        const isPrice    = t => t.startsWith("Rp") || t.toLowerCase() === "gratis";
+                        const isLocation = t => t.includes(",");
+                        const isBadge    = t => FB_BADGES.has(t.toLowerCase());
+                        const isValidTitle = t => t.length > 3 && !isPrice(t) && !isLocation(t) && !isBadge(t);
+                        const price    = spans.find(isPrice) || "N/A";
+                        const title    = spans.find(isValidTitle) || spans.find(t => !isPrice(t) && !isLocation(t)) || "N/A";
+                        const location = spans.filter(t => !isPrice(t) && t.toLowerCase() !== "gratis").pop() || "N/A";
                         data.push({ title, price, location, url: href });
                     }
                     return data;
@@ -91,8 +99,9 @@ def do_scrape(job_id, keyword, max_scroll, city, radius):
 
             ts   = datetime.now().strftime("%Y%m%d_%H%M%S")
             slug = keyword.replace(" ", "_")
-            base = f"/app/output/{slug}_{ts}"
-            os.makedirs("/app/output", exist_ok=True)
+            output_dir = os.path.join(project_dir, "output")
+            base = os.path.join(output_dir, f"{slug}_{ts}")
+            os.makedirs(output_dir, exist_ok=True)
 
             with open(f"{base}.json", "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2, ensure_ascii=False)
